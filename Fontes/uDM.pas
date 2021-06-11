@@ -16,7 +16,6 @@ type
     FDConnection: TFDConnection;
     FDPhysSQLiteDriver: TFDPhysSQLiteDriverLink;
     FDQuery: TFDQuery;
-    FDCommand: TFDCommand;
     FDGUIxWaitCursor: TFDGUIxWaitCursor;
     qryCategorias: TFDQuery;
     qryCategoriasID_CATE: TIntegerField;
@@ -24,6 +23,12 @@ type
     qryCategoriasID_SUBCATE: TIntegerField;
     qryCategoriasSUB_CATEGORIA: TWideMemoField;
     qryCategoriasIMAGEM: TBlobField;
+    FDCommand: TFDQuery;
+    IntegerField1: TIntegerField;
+    WideMemoField1: TWideMemoField;
+    IntegerField2: TIntegerField;
+    WideMemoField2: TWideMemoField;
+    BlobField1: TBlobField;
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }

@@ -1,17 +1,21 @@
-unit ListaCompra;
+Ôªøunit ListaCompra;
 
 interface
 
 uses
+  // unit de formatar texto
+  uFormat,
+  // _______________________
   System.SysUtils, System.Types, System.UITypes, System.Classes,
   System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.ListBox,
   FMX.Layouts, FMX.MultiView, FMX.StdCtrls, FMX.TabControl,
   FMX.Controls.Presentation, FMX.Objects, FMX.Edit, System.Permissions,
-  FMX.MediaLibrary.Actions, System.Actions, FMX.ActnList, FMX.StdActns,uDM,
+  FMX.MediaLibrary.Actions, System.Actions, FMX.ActnList, FMX.StdActns, uDM,
   FMX.ListView.Types, FMX.ListView.Appearances, FMX.ListView.Adapters.Base,
-  FMX.ListView, System.Rtti, System.Bindings.Outputs, Fmx.Bind.Editors,
-  Data.Bind.EngExt, Fmx.Bind.DBEngExt, Data.Bind.Components, Data.Bind.DBScope;
+  FMX.ListView, System.Rtti, System.Bindings.Outputs, FMX.Bind.Editors,
+  Data.Bind.EngExt, FMX.Bind.DBEngExt, Data.Bind.Components, Data.Bind.DBScope,
+  FMX.Effects;
 
 type
   TListaCompras = class(TForm)
@@ -75,7 +79,6 @@ type
     Label3: TLabel;
     Rectangle2: TRectangle;
     Layout5: TLayout;
-    BtnCarne: TButton;
     ImageCarne: TImage;
     Label4: TLabel;
     BtnLimpeza: TButton;
@@ -84,10 +87,49 @@ type
     BtnMantimento: TButton;
     Image2: TImage;
     Label6: TLabel;
-    ListView1: TListView;
+    lvLista: TListView;
     BindSourceDB1: TBindSourceDB;
     BindingsList1: TBindingsList;
+    TabLista: TTabItem;
+    cbCategoria: TComboBox;
+    Layout6: TLayout;
+    Label7: TLabel;
+    btnHome: TRectangle;
     LinkListControlToField1: TLinkListControlToField;
+    BtnCarne: TButton;
+    TabControl1: TTabControl;
+    TabControlMontarLista: TTabControl;
+    TabItemLista: TTabItem;
+    TabItemCadProd: TTabItem;
+    Layout7: TLayout;
+    btnAddProd: TCircle;
+    Label8: TLabel;
+    btnRevProd: TCircle;
+    Label9: TLabel;
+    lvProd: TListView;
+    BlurEffect: TBlurEffect;
+    LayoutCadProd: TLayout;
+    RecFundoCadProd: TRectangle;
+    LayoutCadProdTop: TLayout;
+    Label10: TLabel;
+    lblCadProdCategoria: TLabel;
+    LayoutCadProdTop2: TLayout;
+    Label11: TLabel;
+    lblCadProdSubCategoria: TLabel;
+    LayoutCadProdLeft: TLayout;
+    Label12: TLabel;
+    Line3: TLine;
+    Label13: TLabel;
+    LayoutCadProdBottom: TLayout;
+    EditCadProdProduto: TEdit;
+    LayoutCadProdClient: TLayout;
+    EditCadProdValor: TEdit;
+    btnCadProdCancela: TRectangle;
+    btnCadProdConfirma: TRectangle;
+    Label14: TLabel;
+    Label15: TLabel;
+    LinkPropertyToFieldText: TLinkPropertyToField;
+    LinkPropertyToFieldText2: TLinkPropertyToField;
     procedure ButtonEditarLoginClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure ActPhotoLibraryDidFinishTaking(Image: TBitmap);
@@ -103,7 +145,14 @@ type
     procedure BtnCarneClick(Sender: TObject);
     procedure BtnMantimentoClick(Sender: TObject);
     procedure BtnLimpezaClick(Sender: TObject);
-
+    procedure btnHomeClick(Sender: TObject);
+    procedure cbCarneClick(Sender: TObject);
+    procedure lvListaItemClick(const Sender: TObject;
+      const AItem: TListViewItem);
+    procedure btnAddProdClick(Sender: TObject);
+    procedure btnCadProdCancelaClick(Sender: TObject);
+    procedure EditCadProdValorTyping(Sender: TObject);
+    procedure btnCadProdConfirmaClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -126,6 +175,7 @@ type
 
 var
   ListaCompras: TListaCompras;
+  VGCategoria: Integer;
 
 implementation
 
@@ -138,7 +188,7 @@ uses FMX.DialogService
 {$ENDIF}
     ;
 
-{ ******************************* Rotina que verifica a permis„o para uso de cameras ********************** }
+{ ******************************* Rotina que verifica a permis√£o para uso de cameras ********************** }
 {$IFDEF ANDROID}
 
 procedure TListaCompras.TakePicturePermissionRequestResult(Sender: TObject;
@@ -153,7 +203,7 @@ begin
     (AGrantResults[2] = TPermissionStatus.Granted) then
     ActPhotoCamera.Execute
   else
-    TDialogService.ShowMessage('VocÍ n„o tem permiss„o para tirar fotos');
+    TDialogService.ShowMessage('Voc√™ n√£o tem permiss√£o para tirar fotos');
 end;
 
 procedure TListaCompras.LibraryPermissionRequestResult(Sender: TObject;
@@ -167,15 +217,14 @@ begin
     (AGrantResults[1] = TPermissionStatus.Granted) then
     ActPhotoLibrary.Execute
   else
-    TDialogService.ShowMessage('VocÍ n„o tem permiss„o para acessar as fotos');
+    TDialogService.ShowMessage('Voc√™ n√£o tem permiss√£o para acessar as fotos');
 end;
-
 
 procedure TListaCompras.DisplayMessageCamera(Sender: TObject;
   const APermissions: TArray<string>; const APostProc: TProc);
 begin
   TDialogService.ShowMessage
-    ('O app precisa acessar a c‚mera e as fotos do seu dispositivo',
+    ('O app precisa acessar a c√¢mera e as fotos do seu dispositivo',
     procedure(const AResult: TModalResult)
     begin
       APostProc;
@@ -195,12 +244,11 @@ end;
 {$ENDIF}
 { ************************** fim da rotina **************************************************** }
 
-
-{ *************************** iniciando os eventos para os botıes de foto ********************* }
+{ *************************** iniciando os eventos para os bot√µes de foto ********************* }
 procedure TListaCompras.ActPhotoCameraDidFinishTaking(Image: TBitmap);
 begin
-circle_foto.Fill.Bitmap.Bitmap := Image;
-Circle_img_perfil.Fill.Bitmap.Bitmap := Image;
+  circle_foto.Fill.Bitmap.Bitmap := Image;
+  Circle_img_perfil.Fill.Bitmap.Bitmap := Image;
 end;
 
 procedure TListaCompras.ActPhotoLibraryDidFinishTaking(Image: TBitmap);
@@ -208,38 +256,32 @@ begin
   circle_foto.Fill.Bitmap.Bitmap := Image;
   Circle_img_perfil.Fill.Bitmap.Bitmap := Image;
 end;
-{************************ BOT’ES DE USO DA CAMERA ****************************************}
+
+{ ************************ BOT√ïES DE USO DA CAMERA **************************************** }
 procedure TListaCompras.ImageCameraClick(Sender: TObject);
 begin
-        {$IFDEF ANDROID}
-        PermissionsService.RequestPermissions([PermissaoCamera,
-                                               PermissaoReadStorage,
-                                               PermissaoWriteStorage],
-                                               TakePicturePermissionRequestResult,
-                                               DisplayMessageCamera
-                                               );
-        {$ENDIF}
-
-        {$IFDEF IOS}
-        ActPhotoCamera.Execute;
-        {$ENDIF}
+{$IFDEF ANDROID}
+  PermissionsService.RequestPermissions([PermissaoCamera, PermissaoReadStorage,
+    PermissaoWriteStorage], TakePicturePermissionRequestResult,
+    DisplayMessageCamera);
+{$ENDIF}
+{$IFDEF IOS}
+  ActPhotoCamera.Execute;
+{$ENDIF}
 end;
 
 procedure TListaCompras.ImageUsuarioEdicaoClick(Sender: TObject);
 begin
-        {$IFDEF ANDROID}
-        PermissionsService.RequestPermissions([PermissaoReadStorage,
-                                               PermissaoWriteStorage],
-                                               LibraryPermissionRequestResult,
-                                               DisplayMessageLibrary
-                                               );
-        {$ENDIF}
-
-        {$IFDEF IOS}
-        ActPhotoLibrary.Execute;
-        {$ENDIF}
+{$IFDEF ANDROID}
+  PermissionsService.RequestPermissions([PermissaoReadStorage,
+    PermissaoWriteStorage], LibraryPermissionRequestResult,
+    DisplayMessageLibrary);
+{$ENDIF}
+{$IFDEF IOS}
+  ActPhotoLibrary.Execute;
+{$ENDIF}
 end;
-{**********************************************************************************************}
+{ ********************************************************************************************** }
 
 procedure TListaCompras.FormActivate(Sender: TObject);
 begin
@@ -255,7 +297,7 @@ end;
 procedure TListaCompras.FormCreate(Sender: TObject);
 begin
 
-// CARREGANDO O USUARIO //
+  // CARREGANDO O USUARIO //
   if not DataBase.FDConnection.Connected then
   begin
     DataBase.FDConnection.Connected := True;
@@ -269,45 +311,63 @@ begin
   EditUsuario.Text := DataBase.FDQuery.FieldByName('USUARIO').AsString;
   LabelNomeUsuario.Text := DataBase.FDQuery.FieldByName('USUARIO').AsString;
 
-// CARREGANDO A LISTA CATEGORIAS //
+  // CARREGANDO A LISTA CATEGORIAS //
 
-DataBase.qryCategorias.Close;
-DataBase.qryCategorias.Open;
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.Open;
 
-
+  LayoutCadProd.Visible := False;
+  BlurEffect.Enabled := False;
 
 end;
 
 procedure TListaCompras.BtnCarneClick(Sender: TObject);
 begin
 
-// FILTRANDO POR CATEGORIA //
-DataBase.qryCategorias.Close;
-DataBase.qryCategorias.SQL.Strings[5]:= '';
-DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
-DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger :=  BtnCarne.Tag;
-DataBase.qryCategorias.Open;
+  // FILTRANDO POR CATEGORIA //
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.SQL.Strings[5] := '';
+  DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
+  DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger := BtnCarne.Tag;
+  DataBase.qryCategorias.Open;
+
+  VGCategoria := BtnCarne.Tag;
+
+end;
+
+procedure TListaCompras.btnHomeClick(Sender: TObject);
+begin
+  ChangeTab.Tab := TabInicio;
+  ChangeTab.ExecuteTarget(Sender);
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.SQL.Strings[5] := '';
+  DataBase.qryCategorias.Open;
 
 end;
 
 procedure TListaCompras.BtnLimpezaClick(Sender: TObject);
 begin
-// FILTRANDO POR CATEGORIA //
-DataBase.qryCategorias.Close;
-DataBase.qryCategorias.SQL.Strings[5]:= '';
-DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
-DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger :=  BtnLimpeza.Tag;
-DataBase.qryCategorias.Open;
+  // FILTRANDO POR CATEGORIA //
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.SQL.Strings[5] := '';
+  DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
+  DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger := BtnLimpeza.Tag;
+  DataBase.qryCategorias.Open;
+
+  VGCategoria := BtnLimpeza.Tag;
 end;
 
 procedure TListaCompras.BtnMantimentoClick(Sender: TObject);
 begin
-// FILTRANDO POR CATEGORIA //
-DataBase.qryCategorias.Close;
-DataBase.qryCategorias.SQL.Strings[5]:= '';
-DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
-DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger :=  BtnMantimento.Tag;
-DataBase.qryCategorias.Open;
+  // FILTRANDO POR CATEGORIA //
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.SQL.Strings[5] := '';
+  DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
+  DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger :=
+    BtnMantimento.Tag;
+  DataBase.qryCategorias.Open;
+
+  VGCategoria := BtnMantimento.Tag;
 end;
 
 procedure TListaCompras.ButtonEditarLoginClick(Sender: TObject);
@@ -316,43 +376,130 @@ begin
   LayoutUsuario.Visible := True;
 end;
 
+procedure TListaCompras.cbCarneClick(Sender: TObject);
+begin
+  // FILTRANDO POR CATEGORIA //
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.SQL.Strings[5] := '';
+  DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
+  DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger := BtnLimpeza.Tag;
+  DataBase.qryCategorias.Open;
+
+  VGCategoria := BtnLimpeza.Tag;
+end;
+
 procedure TListaCompras.SalvaEdicaoUsuarioClick(Sender: TObject);
 begin
-LabelNomeUsuario.text := EditUsuario.Text;
-LayoutUsuario.Visible := False;
+  LabelNomeUsuario.Text := EditUsuario.Text;
+  LayoutUsuario.Visible := False;
 
 end;
 
-
-{*************************** botıes do menu ***********************************}
+{ *************************** bot√µes do menu *********************************** }
 procedure TListaCompras.CriasListaClick(Sender: TObject);
 begin
-ButtonMenu.OnClick(self);
-// criar lista de compras
+  ButtonMenu.OnClick(self);
+  // criar lista de compras
+  ChangeTab.Tab := TabInicio;
+  ChangeTab.ExecuteTarget(Sender);
+  DataBase.qryCategorias.Close;
+  DataBase.qryCategorias.SQL.Strings[5] := '';
+  DataBase.qryCategorias.Open;
 end;
 
 procedure TListaCompras.MinhaListaClick(Sender: TObject);
 begin
-ButtonMenu.OnClick(self);
-// Minha Lista
+  ButtonMenu.OnClick(self);
+  // Minha Lista
 end;
 
 procedure TListaCompras.CompartilharListaClick(Sender: TObject);
 begin
-ButtonMenu.OnClick(self);
-// Como Usar
+  ButtonMenu.OnClick(self);
+  // Como Usar
 end;
 
 procedure TListaCompras.InfoClick(Sender: TObject);
 begin
-ButtonMenu.OnClick(self);
-// mudar para tela informaÁıes do app.
-//ChangeTab.Tab := tb
+  ButtonMenu.OnClick(self);
+  // mudar para tela informa√ß√µes do app.
+  // ChangeTab.Tab := tb
 end;
-{******************************************************************************}
 
+procedure TListaCompras.lvListaItemClick(const Sender: TObject;
+const AItem: TListViewItem);
+begin
+  ChangeTab.Tab := TabItemCadProd;
+  ChangeTab.ExecuteTarget(Sender);
 
+end;
 
+{ ****************************************************************************** }
 
+procedure TListaCompras.btnAddProdClick(Sender: TObject);
+begin
+  BlurEffect.Enabled := True;
+  LayoutCadProd.Visible := True;
+end;
+
+procedure TListaCompras.btnCadProdCancelaClick(Sender: TObject);
+begin
+
+  EditCadProdProduto.Text := '';
+  EditCadProdValor.Text := '';
+  BlurEffect.Enabled := False;
+  LayoutCadProd.Visible := False;
+end;
+
+procedure TListaCompras.btnCadProdConfirmaClick(Sender: TObject);
+begin
+  // inserindo os produtos
+
+  try
+    DataBase.FDQuery.SQL.Clear;
+    DataBase.FDQuery.SQL.Add
+      ('SELECT IFNULL(MAX(ID_PROD),0) AS COUNT FROM PRODUTO');
+    DataBase.FDQuery.Open();
+
+    DataBase.FDConnection.StartTransaction;
+    DataBase.FDCommand.SQL.Clear;
+    DataBase.FDCommand.SQL.Add
+      ('INSERT INTO PRODUTO( ID_PROD, ID_CATE, ID_SUBCATE, PRODUTO, VALOR)');
+    DataBase.FDCommand.SQL.Add
+      ('             VALUES(:ID_PROD,:ID_CATE,:ID_SUBCATE,:PRODUTO,:VALOR)');
+    DataBase.FDCommand.ParamByName('ID_PROD').AsInteger :=
+      DataBase.FDQuery.FieldByName('COUNT').AsInteger + 1;
+    DataBase.FDCommand.ParamByName('ID_CATE').AsInteger :=
+      DataBase.qryCategorias.FieldByName('ID_CATE').AsInteger;
+    DataBase.FDCommand.ParamByName('ID_SUBCATE').AsInteger :=
+      DataBase.qryCategorias.FieldByName('ID_SUBCATE').AsInteger;
+    DataBase.FDCommand.ParamByName('PRODUTO').AsString :=
+      EditCadProdProduto.Text;
+    DataBase.FDCommand.ParamByName('VALOR').AsFloat :=
+      StrToFloatDef(EditCadProdValor.Text,0);
+    DataBase.FDCommand.ExecSQL;
+
+    DataBase.FDConnection.Commit;
+
+  except
+    on Eror: Exception do
+    begin
+      DataBase.FDConnection.Rollback;
+      ShowMessage('Erro ao Salvar');
+    end;
+
+  end;
+
+  EditCadProdProduto.Text := '';
+  EditCadProdValor.Text := '';
+
+  btnCadProdCancela.OnClick(Sender);
+
+end;
+
+procedure TListaCompras.EditCadProdValorTyping(Sender: TObject);
+begin
+  Formatar(EditCadProdValor, Valor);
+end;
 
 end.
