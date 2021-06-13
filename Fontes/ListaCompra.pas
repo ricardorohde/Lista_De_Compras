@@ -26,7 +26,7 @@ type
     ListMenu: TListBox;
     Login: TListBoxItem;
     MinhaLista: TListBoxItem;
-    CriasLista: TListBoxItem;
+    Produto: TListBoxItem;
     CompartilharLista: TListBoxItem;
     Info: TListBoxItem;
     ImageFundoLogin: TImage;
@@ -78,26 +78,21 @@ type
     Label2: TLabel;
     Label3: TLabel;
     Rectangle2: TRectangle;
-    Layout5: TLayout;
+    LayoutBtnLista: TLayout;
     ImageCarne: TImage;
     Label4: TLabel;
     BtnLimpeza: TButton;
     ImageLimpeza: TImage;
     Label5: TLabel;
     BtnMantimento: TButton;
-    Image2: TImage;
+    ImageMantimento: TImage;
     Label6: TLabel;
     lvLista: TListView;
     BindSourceDB1: TBindSourceDB;
     BindingsList1: TBindingsList;
-    TabLista: TTabItem;
-    cbCategoria: TComboBox;
-    Layout6: TLayout;
-    Label7: TLabel;
     btnHome: TRectangle;
     LinkListControlToField1: TLinkListControlToField;
     BtnCarne: TButton;
-    TabControl1: TTabControl;
     TabControlMontarLista: TTabControl;
     TabItemLista: TTabItem;
     TabItemCadProd: TTabItem;
@@ -130,6 +125,10 @@ type
     Label15: TLabel;
     LinkPropertyToFieldText: TLinkPropertyToField;
     LinkPropertyToFieldText2: TLinkPropertyToField;
+    Label16: TLabel;
+    cbCadProdTipo: TComboBox;
+    BindSourceDB2: TBindSourceDB;
+    LinkListControlToField2: TLinkListControlToField;
     procedure ButtonEditarLoginClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure ActPhotoLibraryDidFinishTaking(Image: TBitmap);
@@ -138,7 +137,7 @@ type
     procedure ImageUsuarioEdicaoClick(Sender: TObject);
     procedure SalvaEdicaoUsuarioClick(Sender: TObject);
     procedure InfoClick(Sender: TObject);
-    procedure CriasListaClick(Sender: TObject);
+    procedure ProdutoClick(Sender: TObject);
     procedure MinhaListaClick(Sender: TObject);
     procedure CompartilharListaClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -146,13 +145,13 @@ type
     procedure BtnMantimentoClick(Sender: TObject);
     procedure BtnLimpezaClick(Sender: TObject);
     procedure btnHomeClick(Sender: TObject);
-    procedure cbCarneClick(Sender: TObject);
     procedure lvListaItemClick(const Sender: TObject;
       const AItem: TListViewItem);
     procedure btnAddProdClick(Sender: TObject);
     procedure btnCadProdCancelaClick(Sender: TObject);
     procedure EditCadProdValorTyping(Sender: TObject);
     procedure btnCadProdConfirmaClick(Sender: TObject);
+    procedure btnRevProdClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -316,6 +315,12 @@ begin
   DataBase.qryCategorias.Close;
   DataBase.qryCategorias.Open;
 
+  ChangeTab.Tab:= TabInicio;
+  ChangeTab.ExecuteTarget(Sender);
+
+  ChangeTab.Tab:= TabItemLista;
+  ChangeTab.ExecuteTarget(Sender);
+
   LayoutCadProd.Visible := False;
   BlurEffect.Enabled := False;
 
@@ -342,6 +347,9 @@ begin
   DataBase.qryCategorias.Close;
   DataBase.qryCategorias.SQL.Strings[5] := '';
   DataBase.qryCategorias.Open;
+
+  ChangeTab.Tab := TabItemLista;
+  ChangeTab.ExecuteTarget(Sender);
 
 end;
 
@@ -370,41 +378,120 @@ begin
   VGCategoria := BtnMantimento.Tag;
 end;
 
+procedure TListaCompras.btnRevProdClick(Sender: TObject);
+var
+lResultStr : string;
+begin
+TDialogService.MessageDialog('Deseja excluir produto selecionado: '+DataBase.qryProduto.FieldByName('PRODUTO').AsString+' ?' , TMsgDlgType.mtConfirmation,
+    FMX.Dialogs.mbYesNo, TMsgDlgBtn.mbNo, 0,
+    procedure(const AResult: TModalResult)
+    begin
+      case AResult of
+        mrYes: lResultStr:='Y';
+        mrNo:  lResultStr:='N';
+      end;
+    end);
+
+    if lResultStr =  'Y' then
+    begin
+    try
+      DataBase.FDConnection.StartTransaction;
+
+      DataBase.FDCommand.Close;
+      DataBase.FDCommand.SQL.Clear;
+      DataBase.FDCommand.SQL.Add('DELETE FROM PRODUTO');
+      DataBase.FDCommand.SQL.Add('WHERE ID_PROD = :ID_PROD');
+      DataBase.FDCommand.ParamByName('ID_PROD').AsInteger := DataBase.qryProduto.FieldByName('ID_PROD').AsInteger;
+      DataBase.FDCommand.ExecSQL;
+
+      DataBase.FDConnection.Commit;
+
+      DataBase.qryProduto.Close;
+      DataBase.qryProduto.Open;
+
+    except
+     on E:Exception do
+     begin
+       DataBase.FDConnection.Rollback;
+       ShowMessage('Não foi possivel excluir: '+E.Message);
+
+     end;
+    end;
+    end;
+
+end;
+
 procedure TListaCompras.ButtonEditarLoginClick(Sender: TObject);
 begin
   ButtonMenu.OnClick(self);
   LayoutUsuario.Visible := True;
 end;
 
-procedure TListaCompras.cbCarneClick(Sender: TObject);
-begin
-  // FILTRANDO POR CATEGORIA //
-  DataBase.qryCategorias.Close;
-  DataBase.qryCategorias.SQL.Strings[5] := '';
-  DataBase.qryCategorias.SQL.Strings[5] := ' AND C.ID_CATE = :CATEGORIA';
-  DataBase.qryCategorias.ParamByName('CATEGORIA').AsInteger := BtnLimpeza.Tag;
-  DataBase.qryCategorias.Open;
-
-  VGCategoria := BtnLimpeza.Tag;
-end;
-
 procedure TListaCompras.SalvaEdicaoUsuarioClick(Sender: TObject);
 begin
-  LabelNomeUsuario.Text := EditUsuario.Text;
-  LayoutUsuario.Visible := False;
+
+
+ // inserindo os produtos
+
+  try
+
+    DataBase.FDConnection.StartTransaction;
+
+    DataBase.FDQuery.SQL.Clear;
+    DataBase.FDQuery.SQL.Add
+      ('SELECT IFNULL(USUARIO,''VAZIO'') AS USUARIO FROM USUARIO');
+    DataBase.FDQuery.Open();
+
+    if (Database.FDQuery.FieldByName('USUARIO').AsString = 'VAZIO') or
+       (Database.FDQuery.FieldByName('USUARIO').AsString = '')      then
+    begin
+    DataBase.FDCommand.SQL.Clear;
+    DataBase.FDCommand.SQL.Add('INSERT INTO USUARIO(USUARIO)VALUES(:USUARIO)');
+    DataBase.FDCommand.ParamByName('USUARIO').AsString :=  EditUsuario.Text;
+    DataBase.FDCommand.ExecSQL;
+    end
+    else
+    begin
+    DataBase.FDCommand.SQL.Clear;
+    DataBase.FDCommand.SQL.Add('UPDATE USUARIO SET USUARIO = :USUARIO');
+    DataBase.FDCommand.ParamByName('USUARIO').AsString :=  EditUsuario.Text;
+    DataBase.FDCommand.ExecSQL;
+    end;
+
+    DataBase.FDConnection.Commit;
+
+    LabelNomeUsuario.Text := EditUsuario.Text;
+    LayoutUsuario.Visible := False;
+
+  except
+    on E: Exception do
+    begin
+      DataBase.FDConnection.Rollback;
+      ShowMessage('Erro ao Salvar: ' + E.Message);
+    end;
+
+  end;
+
+
+
 
 end;
 
 { *************************** botões do menu *********************************** }
-procedure TListaCompras.CriasListaClick(Sender: TObject);
+procedure TListaCompras.ProdutoClick(Sender: TObject);
 begin
   ButtonMenu.OnClick(self);
-  // criar lista de compras
+  // Mostra Lista de produtos
+
   ChangeTab.Tab := TabInicio;
   ChangeTab.ExecuteTarget(Sender);
-  DataBase.qryCategorias.Close;
-  DataBase.qryCategorias.SQL.Strings[5] := '';
-  DataBase.qryCategorias.Open;
+
+  ChangeTab.Tab := TabItemCadProd;
+  ChangeTab.ExecuteTarget(Sender);
+
+  DataBase.qryProduto.Close;
+  DataBase.qryProduto.SQL.Strings[15] := '';
+  Database.qryProduto.Open();
 end;
 
 procedure TListaCompras.MinhaListaClick(Sender: TObject);
@@ -426,16 +513,23 @@ begin
   // ChangeTab.Tab := tb
 end;
 
+
+
+{ ****************************************************************************** }
+
 procedure TListaCompras.lvListaItemClick(const Sender: TObject;
 const AItem: TListViewItem);
 begin
   ChangeTab.Tab := TabItemCadProd;
   ChangeTab.ExecuteTarget(Sender);
 
+  DataBase.qryProduto.Close;
+  DataBase.qryProduto.SQL.Strings[15]:='';
+  DataBase.qryProduto.SQL.Strings[15]:='AND SUB.ID_SUBCATE=:SUBCATE';
+  DataBase.qryProduto.ParamByName('SUBCATE').AsInteger := DataBase.qryCategorias.FieldByName('ID_SUBCATE').AsInteger;
+  Database.qryProduto.Open();
+
 end;
-
-{ ****************************************************************************** }
-
 procedure TListaCompras.btnAddProdClick(Sender: TObject);
 begin
   BlurEffect.Enabled := True;
@@ -449,6 +543,8 @@ begin
   EditCadProdValor.Text := '';
   BlurEffect.Enabled := False;
   LayoutCadProd.Visible := False;
+  DataBase.qryProduto.Close;
+  DataBase.qryProduto.Open();
 end;
 
 procedure TListaCompras.btnCadProdConfirmaClick(Sender: TObject);
@@ -464,9 +560,9 @@ begin
     DataBase.FDConnection.StartTransaction;
     DataBase.FDCommand.SQL.Clear;
     DataBase.FDCommand.SQL.Add
-      ('INSERT INTO PRODUTO( ID_PROD, ID_CATE, ID_SUBCATE, PRODUTO, VALOR)');
+      ('INSERT INTO PRODUTO( ID_PROD, ID_CATE, ID_SUBCATE, PRODUTO, VALOR, TIPO)');
     DataBase.FDCommand.SQL.Add
-      ('             VALUES(:ID_PROD,:ID_CATE,:ID_SUBCATE,:PRODUTO,:VALOR)');
+      ('             VALUES(:ID_PROD,:ID_CATE,:ID_SUBCATE,:PRODUTO,:VALOR,:TIPO)');
     DataBase.FDCommand.ParamByName('ID_PROD').AsInteger :=
       DataBase.FDQuery.FieldByName('COUNT').AsInteger + 1;
     DataBase.FDCommand.ParamByName('ID_CATE').AsInteger :=
@@ -477,24 +573,25 @@ begin
       EditCadProdProduto.Text;
     DataBase.FDCommand.ParamByName('VALOR').AsFloat :=
       StrToFloatDef(EditCadProdValor.Text,0);
+    DataBase.FDCommand.ParamByName('TIPO').AsString :=
+      cbCadProdTipo.Items[cbCadProdTipo.ItemIndex];
     DataBase.FDCommand.ExecSQL;
 
     DataBase.FDConnection.Commit;
-
-  except
-    on Eror: Exception do
-    begin
-      DataBase.FDConnection.Rollback;
-      ShowMessage('Erro ao Salvar');
-    end;
-
-  end;
 
   EditCadProdProduto.Text := '';
   EditCadProdValor.Text := '';
 
   btnCadProdCancela.OnClick(Sender);
 
+  except
+    on E: Exception do
+    begin
+      DataBase.FDConnection.Rollback;
+      ShowMessage('Erro ao Salvar: ' + E.Message);
+    end;
+
+  end;
 end;
 
 procedure TListaCompras.EditCadProdValorTyping(Sender: TObject);

@@ -7,7 +7,7 @@ uses
   FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
   FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.FMXUI.Wait,
   Data.DB, FireDAC.Comp.Client, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
-  FireDAC.Stan.ExprFuncs, FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.Stan.Param,
+  FireDAC.Stan.ExprFuncs, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Comp.UI,
   FireDAC.Comp.DataSet;
 
@@ -29,6 +29,18 @@ type
     IntegerField2: TIntegerField;
     WideMemoField2: TWideMemoField;
     BlobField1: TBlobField;
+    qryProduto: TFDQuery;
+    qryProdutoID_PROD: TIntegerField;
+    qryProdutoID_CATE: TIntegerField;
+    qryProdutoID_SUBCATE: TIntegerField;
+    qryProdutoSUB_CATEGORIA: TWideMemoField;
+    qryProdutoPRODUTOTXT: TWideStringField;
+    qryProdutoPRODUTO: TWideMemoField;
+    qryProdutoVALORTXT: TWideStringField;
+    qryProdutoVALOR: TFloatField;
+    qryProdutoIMAGEM: TBlobField;
+    qryProdutoTIPOTXT: TWideStringField;
+    qryProdutoTIPO: TWideMemoField;
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
