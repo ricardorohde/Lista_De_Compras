@@ -5,9 +5,7 @@ object DataBase: TDataBase
   Width = 317
   object FDConnection: TFDConnection
     Params.Strings = (
-      
-        'Database=C:\Users\HP-2007\Documents\Project Lista de Compras\1.0' +
-        '\Dados\Dados.sdb'
+      'Database=C:\Project Lista de Compras\1.0\Dados\Dados.sdb'
       'DriverID=SQLite')
     UpdateOptions.AssignedValues = [uvAutoCommitUpdates]
     UpdateOptions.AutoCommitUpdates = True

@@ -152,6 +152,9 @@ type
     procedure EditCadProdValorTyping(Sender: TObject);
     procedure btnCadProdConfirmaClick(Sender: TObject);
     procedure btnRevProdClick(Sender: TObject);
+    procedure lvProdDblClick(Sender: TObject);
+    procedure lvProdItemClick(const Sender: TObject;
+      const AItem: TListViewItem);
 
   private
     { Private declarations }
@@ -314,6 +317,7 @@ begin
 
   DataBase.qryCategorias.Close;
   DataBase.qryCategorias.Open;
+
 
   ChangeTab.Tab:= TabInicio;
   ChangeTab.ExecuteTarget(Sender);
@@ -510,7 +514,8 @@ procedure TListaCompras.InfoClick(Sender: TObject);
 begin
   ButtonMenu.OnClick(self);
   // mudar para tela informações do app.
-  // ChangeTab.Tab := tb
+  ChangeTab.Tab := tabInformacao;
+  ChangeTab.ExecuteTarget(Sender);
 end;
 
 
@@ -530,6 +535,26 @@ begin
   Database.qryProduto.Open();
 
 end;
+procedure TListaCompras.lvProdDblClick(Sender: TObject);
+begin
+LayoutCadProd.Visible := True;
+BlurEffect.Enabled := True;
+
+EditCadProdProduto.Text := DataBase.qryProduto.FieldByName('PRODUTO').AsString;
+EditCadProdValor.Text   := DataBase.qryProduto.FieldByName('VALOR').AsString;
+
+if DataBase.qryProduto.FieldByName('TIPO').AsString = 'KG' then
+  cbCadProdTipo.ItemIndex := 0
+else
+  cbCadProdTipo.ItemIndex := 1;
+end;
+
+procedure TListaCompras.lvProdItemClick(const Sender: TObject;
+  const AItem: TListViewItem);
+begin
+    lvProdDblClick(Sender);
+end;
+
 procedure TListaCompras.btnAddProdClick(Sender: TObject);
 begin
   BlurEffect.Enabled := True;
