@@ -32,6 +32,7 @@ type
     qryProduto: TFDQuery;
     qryProdutoID_PROD: TIntegerField;
     qryProdutoID_CATE: TIntegerField;
+    qryProdutoCATEGORIA: TWideMemoField;
     qryProdutoID_SUBCATE: TIntegerField;
     qryProdutoSUB_CATEGORIA: TWideMemoField;
     qryProdutoPRODUTOTXT: TWideStringField;
@@ -41,6 +42,7 @@ type
     qryProdutoIMAGEM: TBlobField;
     qryProdutoTIPOTXT: TWideStringField;
     qryProdutoTIPO: TWideMemoField;
+    qryBusca: TFDQuery;
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }

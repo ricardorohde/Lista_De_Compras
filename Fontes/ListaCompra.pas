@@ -123,8 +123,6 @@ type
     btnCadProdConfirma: TRectangle;
     Label14: TLabel;
     Label15: TLabel;
-    LinkPropertyToFieldText: TLinkPropertyToField;
-    LinkPropertyToFieldText2: TLinkPropertyToField;
     Label16: TLabel;
     cbCadProdTipo: TComboBox;
     BindSourceDB2: TBindSourceDB;
@@ -155,7 +153,9 @@ type
     procedure lvProdDblClick(Sender: TObject);
     procedure lvProdItemClick(const Sender: TObject;
       const AItem: TListViewItem);
-
+    function VerificaCampos :Boolean;
+    procedure InsertProduto;
+    procedure UpdateProduto;
   private
     { Private declarations }
 {$IFDEF ANDROID}
@@ -170,6 +170,7 @@ type
       const AGrantResults: TArray<TPermissionStatus>);
     procedure DisplayMessageLibrary(Sender: TObject;
       const APermissions: TArray<string>; const APostProc: TProc);
+
 {$ENDIF}
   public
     { Public declarations }
@@ -481,6 +482,41 @@ begin
 
 end;
 
+procedure TListaCompras.UpdateProduto;
+begin
+
+      DataBase.FDConnection.StartTransaction;
+
+      DataBase.FDCommand.SQL.Clear;
+      DataBase.FDCommand.SQL.Add
+        ('UPDATE  PRODUTO SET PRODUTO = :PRODUTO, VALOR = :VALOR, TIPO = :TIPO');
+      DataBase.FDCommand.SQL.Add('WHERE ID_PROD = :ID_PROD');
+      DataBase.FDCommand.ParamByName('ID_PROD').AsInteger     :=       DataBase.qryBusca.FieldByName('ID_PROD').AsInteger;
+      DataBase.FDCommand.ParamByName('PRODUTO').AsString      :=       EditCadProdProduto.Text;
+      DataBase.FDCommand.ParamByName('VALOR').AsFloat         :=       StrToFloatDef(EditCadProdValor.Text,0);
+      DataBase.FDCommand.ParamByName('TIPO').AsString         :=       cbCadProdTipo.Items[cbCadProdTipo.ItemIndex];
+      DataBase.FDCommand.ExecSQL;
+
+      DataBase.FDConnection.Commit;
+end;
+
+function TListaCompras.VerificaCampos: Boolean;
+begin
+ Result := True;
+ if EditCadProdProduto.Text = '' then
+ begin
+   ShowMessage('Digite o nome do produto !');
+   Result := False;
+   abort;
+ end;
+ if (EditCadProdValor.Text = '') or (StrToFloat(EditCadProdValor.Text) < 0) then
+ begin
+   ShowMessage('Digite o nome do produto !');
+   Result := False;
+   abort;
+ end;
+end;
+
 { *************************** botões do menu *********************************** }
 procedure TListaCompras.ProdutoClick(Sender: TObject);
 begin
@@ -520,6 +556,32 @@ end;
 
 
 
+procedure TListaCompras.InsertProduto;
+begin
+  DataBase.FDConnection.StartTransaction;
+
+  DataBase.FDQuery.SQL.Clear;
+  DataBase.FDQuery.Close;
+  DataBase.FDQuery.SQL.Add
+    ('SELECT IFNULL(MAX(ID_PROD),0) AS COUNT FROM PRODUTO');
+  DataBase.FDQuery.Open();
+
+  DataBase.FDCommand.SQL.Clear;
+  DataBase.FDCommand.SQL.Add
+    ('INSERT INTO PRODUTO( ID_PROD, ID_CATE, ID_SUBCATE, PRODUTO, VALOR, TIPO)');
+  DataBase.FDCommand.SQL.Add
+    ('             VALUES(:ID_PROD,:ID_CATE,:ID_SUBCATE,:PRODUTO,:VALOR,:TIPO)');
+  DataBase.FDCommand.ParamByName('ID_PROD').AsInteger     :=       DataBase.FDQuery.FieldByName('COUNT').AsInteger + 1;
+  DataBase.FDCommand.ParamByName('ID_CATE').AsInteger     :=       DataBase.qryCategorias.FieldByName('ID_CATE').AsInteger;
+  DataBase.FDCommand.ParamByName('ID_SUBCATE').AsInteger  :=       DataBase.qryCategorias.FieldByName('ID_SUBCATE').AsInteger;
+  DataBase.FDCommand.ParamByName('PRODUTO').AsString      :=       EditCadProdProduto.Text;
+  DataBase.FDCommand.ParamByName('VALOR').AsFloat         :=       StrToFloatDef(EditCadProdValor.Text,0);
+  DataBase.FDCommand.ParamByName('TIPO').AsString         :=       cbCadProdTipo.Items[cbCadProdTipo.ItemIndex];
+  DataBase.FDCommand.ExecSQL;
+
+  DataBase.FDConnection.Commit;
+end;
+
 { ****************************************************************************** }
 
 procedure TListaCompras.lvListaItemClick(const Sender: TObject;
@@ -537,16 +599,18 @@ begin
 end;
 procedure TListaCompras.lvProdDblClick(Sender: TObject);
 begin
-LayoutCadProd.Visible := True;
-BlurEffect.Enabled := True;
+  LayoutCadProd.Visible := True;
+  BlurEffect.Enabled := True;
 
-EditCadProdProduto.Text := DataBase.qryProduto.FieldByName('PRODUTO').AsString;
-EditCadProdValor.Text   := DataBase.qryProduto.FieldByName('VALOR').AsString;
+  lblCadProdCategoria.Text    := DataBase.qryProduto.FieldByName('CATEGORIA').AsString;
+  lblCadProdSubCategoria.Text := DataBase.qryProduto.FieldByName('SUB_CATEGORIA').AsString;
+  EditCadProdProduto.Text     := DataBase.qryProduto.FieldByName('PRODUTO').AsString;
+  EditCadProdValor.Text       := DataBase.qryProduto.FieldByName('VALOR').AsString;
 
-if DataBase.qryProduto.FieldByName('TIPO').AsString = 'KG' then
-  cbCadProdTipo.ItemIndex := 0
-else
-  cbCadProdTipo.ItemIndex := 1;
+  if DataBase.qryProduto.FieldByName('TIPO').AsString = 'KG' then
+    cbCadProdTipo.ItemIndex := 0
+  else
+    cbCadProdTipo.ItemIndex := 1;
 end;
 
 procedure TListaCompras.lvProdItemClick(const Sender: TObject;
@@ -559,6 +623,8 @@ procedure TListaCompras.btnAddProdClick(Sender: TObject);
 begin
   BlurEffect.Enabled := True;
   LayoutCadProd.Visible := True;
+  lblCadProdCategoria.Text := DataBase.qryCategorias.FieldByName('CATEGORIA').AsString;
+  lblCadProdSubCategoria.Text := DataBase.qryCategorias.FieldByName('SUB_CATEGORIA').AsString;
 end;
 
 procedure TListaCompras.btnCadProdCancelaClick(Sender: TObject);
@@ -575,48 +641,40 @@ end;
 procedure TListaCompras.btnCadProdConfirmaClick(Sender: TObject);
 begin
   // inserindo os produtos
+  if VerificaCampos then
+  begin
+    try
 
-  try
-    DataBase.FDQuery.SQL.Clear;
-    DataBase.FDQuery.SQL.Add
-      ('SELECT IFNULL(MAX(ID_PROD),0) AS COUNT FROM PRODUTO');
-    DataBase.FDQuery.Open();
+      DataBase.qryBusca.SQL.Clear;
+      DataBase.qryBusca.Close;
+      DataBase.qryBusca.SQL.Add
+        ('SELECT * FROM PRODUTO WHERE PRODUTO = :PRODUTO');
+      DataBase.qryBusca.ParamByName('PRODUTO').AsString := EditCadProdProduto.Text;
+      DataBase.qryBusca.Open();
 
-    DataBase.FDConnection.StartTransaction;
-    DataBase.FDCommand.SQL.Clear;
-    DataBase.FDCommand.SQL.Add
-      ('INSERT INTO PRODUTO( ID_PROD, ID_CATE, ID_SUBCATE, PRODUTO, VALOR, TIPO)');
-    DataBase.FDCommand.SQL.Add
-      ('             VALUES(:ID_PROD,:ID_CATE,:ID_SUBCATE,:PRODUTO,:VALOR,:TIPO)');
-    DataBase.FDCommand.ParamByName('ID_PROD').AsInteger :=
-      DataBase.FDQuery.FieldByName('COUNT').AsInteger + 1;
-    DataBase.FDCommand.ParamByName('ID_CATE').AsInteger :=
-      DataBase.qryCategorias.FieldByName('ID_CATE').AsInteger;
-    DataBase.FDCommand.ParamByName('ID_SUBCATE').AsInteger :=
-      DataBase.qryCategorias.FieldByName('ID_SUBCATE').AsInteger;
-    DataBase.FDCommand.ParamByName('PRODUTO').AsString :=
-      EditCadProdProduto.Text;
-    DataBase.FDCommand.ParamByName('VALOR').AsFloat :=
-      StrToFloatDef(EditCadProdValor.Text,0);
-    DataBase.FDCommand.ParamByName('TIPO').AsString :=
-      cbCadProdTipo.Items[cbCadProdTipo.ItemIndex];
-    DataBase.FDCommand.ExecSQL;
+      if DataBase.qryBusca.IsEmpty then
+      begin
+       InsertProduto;
+      end
+      else
+      begin
+      UpdateProduto;
+      end;
 
-    DataBase.FDConnection.Commit;
+    EditCadProdProduto.Text := '';
+    EditCadProdValor.Text := '';
+    ShowMessage('Item Salvo.');
+    btnCadProdCancela.OnClick(Sender);
 
-  EditCadProdProduto.Text := '';
-  EditCadProdValor.Text := '';
+    except
+      on E: Exception do
+      begin
+        DataBase.FDConnection.Rollback;
+        ShowMessage('Erro ao Salvar: ' + E.Message);
+      end;
 
-  btnCadProdCancela.OnClick(Sender);
-
-  except
-    on E: Exception do
-    begin
-      DataBase.FDConnection.Rollback;
-      ShowMessage('Erro ao Salvar: ' + E.Message);
     end;
-
-  end;
+  end  else  ShowMessage('Não foi possivel Salvar.');
 end;
 
 procedure TListaCompras.EditCadProdValorTyping(Sender: TObject);

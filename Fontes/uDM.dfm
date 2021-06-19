@@ -122,7 +122,7 @@ object DataBase: TDataBase
     Connection = FDConnection
     SQL.Strings = (
       'SELECT P.ID_PROD,'
-      'P.ID_CATE, P.ID_SUBCATE,SUB.SUB_CATEGORIA,'
+      'P.ID_CATE,CAT.CATEGORIA, P.ID_SUBCATE,SUB.SUB_CATEGORIA,'
       #39'PRODUTO: '#39' AS PRODUTOTXT,'
       'P.PRODUTO,'
       #39'VALOR: '#39' AS VALORTXT,'
@@ -130,8 +130,8 @@ object DataBase: TDataBase
       'SUB.IMAGEM,'
       #39'MEDIDA: '#39' AS TIPOTXT,'
       'P.TIPO'
-      'FROM PRODUTO P, SUB_CATEGORIA SUB'
-      'WHERE P.ID_SUBCATE = SUB.ID_SUBCATE'
+      'FROM PRODUTO P, SUB_CATEGORIA SUB, CATEGORIA CAT'
+      'WHERE P.ID_SUBCATE = SUB.ID_SUBCATE AND P.ID_CATE = CAT.ID_CATE'
       ''
       ''
       ''
@@ -150,6 +150,14 @@ object DataBase: TDataBase
     object qryProdutoID_CATE: TIntegerField
       FieldName = 'ID_CATE'
       Origin = 'ID_CATE'
+    end
+    object qryProdutoCATEGORIA: TWideMemoField
+      AutoGenerateValue = arDefault
+      FieldName = 'CATEGORIA'
+      Origin = 'CATEGORIA'
+      ProviderFlags = []
+      ReadOnly = True
+      BlobType = ftWideMemo
     end
     object qryProdutoID_SUBCATE: TIntegerField
       FieldName = 'ID_SUBCATE'
@@ -208,5 +216,10 @@ object DataBase: TDataBase
       Origin = 'TIPO'
       BlobType = ftWideMemo
     end
+  end
+  object qryBusca: TFDQuery
+    Connection = FDConnection
+    Left = 144
+    Top = 96
   end
 end
